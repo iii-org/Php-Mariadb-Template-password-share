@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${CICD_GIT_REPO_NAME}-${CICD_GIT_BRANCH}-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ${CICD_GIT_REPO_NAME}-${CICD_GIT_BRANCH}-web
+  template:
+    metadata:
+      labels:
+        app: ${CICD_GIT_REPO_NAME}-${CICD_GIT_BRANCH}-web
+    spec:
+      imagePullSecrets:
+      - name: pipeline-docker-registry
+      containers:
+      - name: ${CICD_GIT_REPO_NAME}-${CICD_GIT_BRANCH}-web
+        image: ${CICD_IMAGE}
+        ports:
+        - containerPort: 80
+        env:
+        - name: gitlab_token 
+          valueFrom:
+            secretKeyRef:
+              name: gitlab-token
+              key: git-token
+        - name: GIT_URL
+          value: ${CICD_GIT_URL}
+        - name: GIT_REPO
+          value: ${CICD_GIT_REPO_NAME}
+        - name: GIT_BRANCH
+          value: ${CICD_GIT_BRANCH}
+        - name: DB_HOST
+          value: ${CICD_GIT_REPO_NAME}-${CICD_GIT_BRANCH}-db-service
+        - name: DB_PORT
+          value: "3306"
+        - name: DB_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: php-key
+              key: DB_DATABASE
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: php-key
+              key: DB_USERNAME
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ${CICD_GIT_REPO_NAME}-${CICD_GIT_BRANCH}-secret
+              key: MYSQL_ROOT_PASSWORD
